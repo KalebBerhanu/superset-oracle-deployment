@@ -35,55 +35,236 @@ Deploying Apache Superset 6.1.0 with official images introduces severe isolation
 ├── .gitignore                 # Strict filter avoiding commit pollution (ignores local caches)
 ├── docker-compose.yml         # Unified service engine mesh mapping and PYTHONPATH injections
 └── requirements.txt           # Python application layer dependencies tracker (oracledb)
-🚀 Quick Start Deployment Guide
-Prerequisites
-Windows 10/11 with Docker Desktop installed and running (using the WSL 2 backend).
 
-Git command-line interface configured.
+# 🚀 Quick Start Deployment Guide
 
-1. Clone the Blueprint and Create Environment Settings
-Clone this repository to your development path. Before building the containers, instantiate your localized environment file from the provided template:
+## Prerequisites
 
-Bash
-# Copy the structure template to create your live .env profile
+Before you begin, ensure the following are installed and configured:
+
+- Windows 10/11
+- Docker Desktop running with the **WSL 2 backend**
+- Git command-line interface
+
+---
+
+## 1. Clone the Repository and Configure Environment Variables
+
+Clone this repository to your local machine and create your environment configuration file.
+
+```bash
+# Copy the template and create a local environment file
 cp .env.example .env
-Open the newly created .env file and verify that a secure, cryptographic key is assigned to SUPERSET_SECRET_KEY (used to securely encrypt database credential strings in the metadata store).
+```
 
-2. Launch the Stack cleanly
-To guarantee that old caching modules or stale container configurations are fully wiped out, initialize the stack using anonymous volume flags:
+Open the newly created `.env` file and verify that a secure cryptographic value is assigned to:
 
-Bash
-# Bring down lingering containers and clear historical state hooks
+```env
+SUPERSET_SECRET_KEY=
+```
+
+> **Note:** `SUPERSET_SECRET_KEY` is used by Superset to securely encrypt sensitive metadata, including database connection credentials.
+
+---
+
+## 2. Start the Docker Stack
+
+To ensure a clean deployment and remove any stale containers, volumes, or cached configurations, run:
+
+```bash
+# Stop and remove containers, networks, and volumes
 docker-compose down -v
 
-# Fire up the container mesh network in detached background mode
+# Start all services in detached mode
 docker-compose up -d
-3. Verify Container Initialization Logs
-The database initialization script runs schema upgrades and builds default administrative roles. You can monitor this progress in real time:
+```
 
-Bash
+---
+
+## 3. Verify Container Initialization
+
+Monitor the initialization container logs to confirm successful setup:
+
+```bash
 docker logs -f superset_init
-Look for >>> Oracle DB drivers injected successfully in Thin Mode. near the end of the log cycle to confirm successful deployment.
+```
 
-🔌 Establishing the Oracle Database Connection
-Once initialization completes successfully, navigate your web browser to http://localhost:8088 and authenticate using the default management credentials (admin / admin).
+Look for the following message near the end of the logs:
 
-Navigate to the top right menu dashboard: Settings ➡️ Database Connections.
+```text
+>>> Oracle DB drivers injected successfully in Thin Mode.
+```
 
-Click + DATABASE and select Other from the connection wizard selector list.
+This indicates that the Oracle drivers were installed successfully and the environment is ready.
 
-Construct your connection targeting properties using the following pattern:
+---
 
-Display Name: CBE Corporate Warehouse
+# 🔌 Connecting Superset to Oracle Database
 
-SQLAlchemy URI*:
+Once initialization is complete:
 
-Plaintext
-oracle+cx_oracle://WHUSER:WHUSER_123@host.docker.internal:1521/?service_name=PLUGABLE.docker.internal
-Crucial Properties Note:
+1. Open your browser and navigate to:
 
-The prefix oracle+cx_oracle:// is required to trip our custom configuration injection engine.
+   ```text
+   http://localhost:8088
+   ```
 
-host.docker.internal is used to securely exit the containerized Linux network space and route straight back to your host Windows machine where your local Oracle Database listens.
+2. Log in using the default credentials:
 
-Click Test connection. Once the green success notification banner loads, click Connect to save the entry.
+   ```text
+   Username: admin
+   Password: admin
+   ```
+
+3. Navigate to:
+
+   ```text
+   Settings → Database Connections
+   ```
+
+4. Click:
+
+   ```text
+   + DATABASE
+   ```
+
+5. Select:
+
+   ```text
+   Other
+   ```
+
+6. Configure the database connection.
+
+### Display Name
+
+```text
+CBE Corporate Warehouse
+```
+
+### SQLAlchemy URI
+
+```text
+oracle+cx_oracle://USERNAME:PASSWORD@host.docker.internal:1521/?service_name=SERVICENAME
+```
+
+---
+
+## ⚠️ Important Connection Notes
+
+### SQLAlchemy Driver Prefix
+
+The following prefix is mandatory:
+
+```text
+oracle+cx_oracle://
+```
+
+This enables the custom Oracle configuration included in this deployment.
+
+### Host Resolution
+
+```text
+host.docker.internal
+```
+
+This hostname allows containers running inside Docker to connect back to services running on the Windows host machine, including the Oracle database listener.
+
+---
+
+## Connection Verification
+
+1. Click **Test Connection**.
+2. Wait for the success notification.
+3. Click **Connect** to save the database configuration.
+
+---
+
+# 🛑 Maintenance and Contribution Guidelines
+
+The included `.gitignore` excludes the following items from source control:
+
+### Python Cache Files
+
+```text
+pip_cache/
+```
+
+### Runtime Data
+
+```text
+superset_home/
+```
+
+> Except for `.gitkeep` files used to preserve directory structure.
+
+### Environment Secrets
+
+```text
+.env
+```
+
+---
+
+## Adding New Python Dependencies
+
+When introducing additional Python packages:
+
+1. Add the package to:
+
+   ```text
+   requirements.txt
+   ```
+
+2. Restart the environment:
+
+   ```bash
+   docker-compose down
+   docker-compose up -d
+   ```
+
+This automatically rebuilds the Python environment and installs any newly declared dependencies.
+
+---
+
+## Useful Docker Commands
+
+### View Running Containers
+
+```bash
+docker ps
+```
+
+### View Superset Logs
+
+```bash
+docker logs -f superset_app
+```
+
+### Stop the Environment
+
+```bash
+docker-compose down
+```
+
+### Stop and Remove Volumes
+
+```bash
+docker-compose down -v
+```
+
+### Restart the Environment
+
+```bash
+docker-compose restart
+```
+
+---
+
+## Default Access
+
+| Service | URL | Credentials |
+|----------|-----|-------------|
+| Apache Superset | http://localhost:8088 | admin / admin |
+
+---
