@@ -35,32 +35,55 @@ Deploying Apache Superset 6.1.0 with official images introduces severe isolation
 ├── .gitignore                 # Strict filter avoiding commit pollution (ignores local caches)
 ├── docker-compose.yml         # Unified service engine mesh mapping and PYTHONPATH injections
 └── requirements.txt           # Python application layer dependencies tracker (oracledb)
-echo.
-echo ---
-echo.
-echo ## 🚀 Quick Start Deployment Guide
-echo.
-echo ### Prerequisites
-echo * Windows 10/11 with Docker Desktop installed and running ^(using the WSL 2 backend^).
-echo * Git command-line interface configured.
-echo.
-echo ### 1. Clone the Blueprint and Create Environment Settings
-echo Clone this repository to your development path. Before building the containers, instantiate your localized environment file from the provided template:
-echo.
-echo ```bash
-echo # Copy the structure template to create your live .env profile
-echo cp .env.example .env
-echo
-echo.
-echo Open the newly created `.env` file and verify that a secure, cryptographic key is assigned to `SUPERSET_SECRET_KEY` ^(used to securely encrypt database credential strings in the metadata store^).
-echo.
-echo ### 2. Launch the Stack cleanly
-echo To guarantee that old caching modules or stale container configurations are fully wiped out, initialize the stack using anonymous volume flags:
-echo.
-echo ```bash
-echo # Bring down lingering containers and clear historical state hooks
-echo docker-compose down -v
-echo.
-echo # Fire up the container mesh network in detached background mode
-echo docker-compose up -d
-echo
+🚀 Quick Start Deployment Guide
+Prerequisites
+Windows 10/11 with Docker Desktop installed and running (using the WSL 2 backend).
+
+Git command-line interface configured.
+
+1. Clone the Blueprint and Create Environment Settings
+Clone this repository to your development path. Before building the containers, instantiate your localized environment file from the provided template:
+
+Bash
+# Copy the structure template to create your live .env profile
+cp .env.example .env
+Open the newly created .env file and verify that a secure, cryptographic key is assigned to SUPERSET_SECRET_KEY (used to securely encrypt database credential strings in the metadata store).
+
+2. Launch the Stack cleanly
+To guarantee that old caching modules or stale container configurations are fully wiped out, initialize the stack using anonymous volume flags:
+
+Bash
+# Bring down lingering containers and clear historical state hooks
+docker-compose down -v
+
+# Fire up the container mesh network in detached background mode
+docker-compose up -d
+3. Verify Container Initialization Logs
+The database initialization script runs schema upgrades and builds default administrative roles. You can monitor this progress in real time:
+
+Bash
+docker logs -f superset_init
+Look for >>> Oracle DB drivers injected successfully in Thin Mode. near the end of the log cycle to confirm successful deployment.
+
+🔌 Establishing the Oracle Database Connection
+Once initialization completes successfully, navigate your web browser to http://localhost:8088 and authenticate using the default management credentials (admin / admin).
+
+Navigate to the top right menu dashboard: Settings ➡️ Database Connections.
+
+Click + DATABASE and select Other from the connection wizard selector list.
+
+Construct your connection targeting properties using the following pattern:
+
+Display Name: CBE Corporate Warehouse
+
+SQLAlchemy URI*:
+
+Plaintext
+oracle+cx_oracle://WHUSER:WHUSER_123@host.docker.internal:1521/?service_name=PLUGABLE.docker.internal
+Crucial Properties Note:
+
+The prefix oracle+cx_oracle:// is required to trip our custom configuration injection engine.
+
+host.docker.internal is used to securely exit the containerized Linux network space and route straight back to your host Windows machine where your local Oracle Database listens.
+
+Click Test connection. Once the green success notification banner loads, click Connect to save the entry.
