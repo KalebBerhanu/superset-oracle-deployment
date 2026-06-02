@@ -1,0 +1,17 @@
+# =================================================================
+# Git Ignore Rules: Apache Superset 6.1.0 Oracle Thin-Mode Stack
+# =================================================================
+
+# 1. Ignore Local Caches (Massive dependency trees from your Tree Log)
+pip_cache/
+superset_home/.cache/
+**/__pycache__/
+*.pyc
+
+# 2. Ignore Application Internal State Volume Data
+# (We preserve the folder existence, but discard container state)
+superset_home/*
+!superset_home/.gitkeep
+
+# 3. Security Boundary: NEVER commit production passwords or access keys
+.env

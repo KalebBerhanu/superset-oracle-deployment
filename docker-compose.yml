@@ -1,0 +1,52 @@
+# The version attribute is obsolete and has been removed to prevent warnings
+
+x-superset-volumes: &superset-volumes
+  # Mounts your custom config file directly into the container
+  - ./config/superset_config.py:/app/superset_config.py
+  # Persists Superset home data (sqlite DB, logs, cache) locally
+  - ./superset_home:/app/superset_home
+  # Maps your custom branding images path
+  - ./branding:/app/superset/static/assets/images/custom/
+  # Mounts the requirements configuration file
+  - ./requirements.txt:/app/requirements.txt
+  # Caches python package downloads on your local host storage
+  - ./pip_cache:/app/superset_home/.cache/pip
+
+services:
+  superset:
+    image: apache/superset:6.1.0
+    container_name: superset_app
+    ports:
+      - "8088:8088"
+    volumes: *superset-volumes
+    command: >
+      sh -c "
+      pip install --user -r /app/requirements.txt &&
+      /usr/bin/run-server.sh
+      "
+    environment:
+      - SUPERSET_CONFIG_PATH=/app/superset_config.py
+      - FLASK_ENV=development
+      # CRITICAL: Aligns Python runtime to read our custom user-space packages folder
+      - PYTHONPATH=/app/superset_home/.local/lib/python3.10/site-packages:$PYTHONPATH
+    env_file:
+      - .env
+    depends_on:
+      - superset-init
+
+  superset-init:
+    image: apache/superset:6.1.0
+    container_name: superset_init
+    entrypoint: ""
+    command: >
+      sh -c "
+      pip install --user -r /app/requirements.txt &&
+      superset db upgrade &&
+      superset fab create-admin --username admin --firstname Admin --lastname User --email admin@superset.com --password admin &&
+      superset init
+      "
+    environment:
+      - SUPERSET_CONFIG_PATH=/app/superset_config.py
+      # CRITICAL: Ensures database initialization scripts find the driver
+      - PYTHONPATH=/app/superset_home/.local/lib/python3.10/site-packages:$PYTHONPATH
+    volumes: *superset-volumes
